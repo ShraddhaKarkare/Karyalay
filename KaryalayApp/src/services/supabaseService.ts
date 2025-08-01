@@ -80,19 +80,46 @@ export class SupabaseService {
   }
 
   // Venue Methods
-  static async getVenues(): Promise<Venue[]> {
+  static async getVenues(filters: { 
+    city?: string; 
+    name?: string; 
+    date?: Date;
+  }): Promise<Venue[]> {
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from('venues')
-        .select('*')
-        .eq('is_available', true)
-        .order('created_at', { ascending: false });
+        .select(`
+          id,
+          name,
+          address,
+          city,
+          state,
+          capacity,
+          price_per_hour,
+          price_per_day,
+          image_url,
+          amenities,
+          is_available,
+          description,
+          created_at,
+          updated_at
+        `);
+
+      if (filters.city) {
+        query = query.ilike('city', `%${filters.city}%`);
+      }
+
+      if (filters.name) {
+        query = query.ilike('name', `%${filters.name}%`);
+      }
+
+      const { data, error } = await query;
 
       if (error) throw error;
-      return data || [];
+      return data;
     } catch (error) {
-      console.error('Error getting venues:', error);
-      return [];
+      console.error('Error fetching venues:', error);
+      throw error;
     }
   }
 
@@ -282,5 +309,13 @@ export class SupabaseService {
       console.error('Error sending OTP:', error);
       throw error;
     }
+  }
+
+  static async verifyOtp(email: string, otp: string) {
+    // TODO: Implement OTP verification logic with Supabase 
+    const { error } = await supabase.auth.verifyOtp({ email, token: otp, type: 'email' });
+    if (error) throw error;
+  
+    return true;
   }
 }

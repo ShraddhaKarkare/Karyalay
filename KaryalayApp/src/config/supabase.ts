@@ -35,7 +35,6 @@ export interface Venue {
   capacity: number;
   price_per_hour: number;
   price_per_day?: number;
-  rating: number;
   image_url?: string;
   amenities?: string[];
   is_available: boolean;

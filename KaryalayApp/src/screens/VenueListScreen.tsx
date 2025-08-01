@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -6,68 +6,54 @@ import {
   ScrollView,
   TouchableOpacity,
   Image,
+  TextInput,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-
-interface Venue {
-  id: string;
-  name: string;
-  location: string;
-  capacity: number;
-  price: string;
-  rating: number;
-  image: string;
-  description: string;
-}
+import { SupabaseService } from '../services/supabaseService';
+import { Venue } from '../config/supabase';
 
 interface VenueListScreenProps {
   navigation: any;
 }
 
+
 const VenueListScreen: React.FC<VenueListScreenProps> = ({ navigation }) => {
-  // Mock data - in real app, this would come from API
-  const [venues] = useState<Venue[]>([
-    {
-      id: '1',
-      name: 'Grand Palace Hall',
-      location: 'Mumbai, Maharashtra',
-      capacity: 500,
-      price: '₹50,000',
-      rating: 4.5,
-      image: 'https://via.placeholder.com/300x200/4A90E2/FFFFFF?text=Grand+Palace',
-      description: 'Elegant palace-style venue perfect for weddings and corporate events.',
-    },
-    {
-      id: '2',
-      name: 'Modern Conference Center',
-      location: 'Delhi, NCR',
-      capacity: 200,
-      price: '₹25,000',
-      rating: 4.2,
-      image: 'https://via.placeholder.com/300x200/50C878/FFFFFF?text=Conference+Center',
-      description: 'State-of-the-art conference facility with modern amenities.',
-    },
-    {
-      id: '3',
-      name: 'Garden Wedding Venue',
-      location: 'Bangalore, Karnataka',
-      capacity: 300,
-      price: '₹35,000',
-      rating: 4.7,
-      image: 'https://via.placeholder.com/300x200/FF6B6B/FFFFFF?text=Garden+Venue',
-      description: 'Beautiful outdoor garden venue surrounded by nature.',
-    },
-    {
-      id: '4',
-      name: 'Luxury Banquet Hall',
-      location: 'Chennai, Tamil Nadu',
-      capacity: 400,
-      price: '₹45,000',
-      rating: 4.3,
-      image: 'https://via.placeholder.com/300x200/9B59B6/FFFFFF?text=Luxury+Banquet',
-      description: 'Premium banquet hall with luxury amenities and catering services.',
-    },
-  ]);
+  const [venues, setVenues] = useState<Venue[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [searchCity, setSearchCity] = useState('');
+  const [searchVenue, setSearchVenue] = useState('');
+  const [date, setDate] = useState(new Date());
+  const [showDatePicker, setShowDatePicker] = useState(false);
+
+  // Replace the filter function with a search function
+  const searchVenues = async () => {
+    try {
+      setLoading(true);
+      const venuesData = await SupabaseService.getVenues({
+        city: searchCity.trim(),
+        name: searchVenue.trim(),
+        date: date
+      });
+      // Ensure venuesData is of type Venue[]
+      setVenues(venuesData as Venue[]);
+      setError(null);
+    } catch (err: any) {
+      console.error('Failed to load venues:', err);
+      setError('Failed to load venues. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Call searchVenues when filters change
+  useEffect(() => {
+    const debounceTimer = setTimeout(() => {
+      searchVenues();
+    }, 500); // Debounce search to avoid too many API calls
+
+    return () => clearTimeout(debounceTimer);
+  }, [searchCity, searchVenue, date]);
 
   const renderVenueCard = (venue: Venue) => (
     <TouchableOpacity
@@ -75,23 +61,22 @@ const VenueListScreen: React.FC<VenueListScreenProps> = ({ navigation }) => {
       style={styles.venueCard}
       onPress={() => navigation.navigate('VenueDetail', { venue })}
     >
-      <Image source={{ uri: venue.image }} style={styles.venueImage} />
+      <Image source={{ uri: venue.image_url || '' }} style={styles.venueImage} />
       <View style={styles.venueInfo}>
         <Text style={styles.venueName}>{venue.name}</Text>
-        <Text style={styles.venueLocation}>{venue.location}</Text>
+        <Text style={styles.venueLocation}>
+          {venue.address}, {venue.city}, {venue.state}
+        </Text>
         <Text style={styles.venueDescription}>{venue.description}</Text>
-        
         <View style={styles.venueDetails}>
           <View style={styles.detailItem}>
             <Text style={styles.detailLabel}>Capacity:</Text>
             <Text style={styles.detailValue}>{venue.capacity} people</Text>
           </View>
-          
           <View style={styles.detailItem}>
             <Text style={styles.detailLabel}>Price:</Text>
-            <Text style={styles.detailValue}>{venue.price}</Text>
+            <Text style={styles.detailValue}>₹{venue.price_per_hour}/hr</Text>
           </View>
-          
           <View style={styles.detailItem}>
             <Text style={styles.detailLabel}>Rating:</Text>
             <Text style={styles.detailValue}>⭐ {venue.rating}</Text>
@@ -103,28 +88,50 @@ const VenueListScreen: React.FC<VenueListScreenProps> = ({ navigation }) => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => navigation.goBack()}
-        >
-          <Text style={styles.backButtonText}>← Back</Text>
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Browse Venues</Text>
-      </View>
-
+      <Text style={styles.headerTitle}>Find Karyalay</Text>
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.sectionTitle}>Available Venues</Text>
-        <Text style={styles.sectionSubtitle}>
-          Find the perfect venue for your event
-        </Text>
-
-        <View style={styles.venueList}>
-          {venues.map(renderVenueCard)}
+        <View style={styles.searchSection}>
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Enter city"
+            value={searchCity}
+            onChangeText={setSearchCity}
+          />
+          
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Enter venue name"
+            value={searchVenue}
+            onChangeText={setSearchVenue}
+          />
         </View>
+
+        {loading ? (
+          <View style={styles.loadingContainer}>
+            <Text>Loading venues...</Text>
+          </View>
+        ) : error ? (
+          <View style={styles.errorContainer}>
+            <Text style={styles.errorText}>{error}</Text>
+            <TouchableOpacity 
+              style={styles.retryButton}
+              onPress={searchVenues}
+            >
+              <Text style={styles.retryButtonText}>Retry</Text>
+            </TouchableOpacity>
+          </View>
+        ) : venues.length === 0 ? (
+          <View style={styles.noResultsContainer}>
+            <Text style={styles.noResultsText}>No venues found for the selected criteria</Text>
+          </View>
+        ) : (
+          <View style={styles.venueList}>
+            {venues.map(renderVenueCard)}
+          </View>
+        )}
       </ScrollView>
     </SafeAreaView>
   );
@@ -153,9 +160,15 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   headerTitle: {
-    fontSize: 20,
+    fontSize: 24,
     fontWeight: 'bold',
     color: '#333',
+    textAlign: 'center',
+    marginTop: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e0e0e0',
+    paddingBottom: 10,
+
   },
   scrollContent: {
     paddingHorizontal: 20,
@@ -171,6 +184,40 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#666',
     marginBottom: 24,
+  },
+  searchSection: {
+    gap: 12,
+    marginBottom: 24,
+    backgroundColor: '#fff',
+    padding: 16,
+    borderRadius: 12,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  searchInput: {
+    height: 48,
+    backgroundColor: '#f5f5f5',
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    fontSize: 16,
+    color: '#333',
+  },
+  dateInput: {
+    height: 48,
+    backgroundColor: '#f5f5f5',
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    justifyContent: 'center',
+  },
+  dateText: {
+    fontSize: 16,
+    color: '#333',
   },
   venueList: {
     gap: 20,
@@ -230,6 +277,87 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#333',
   },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    backgroundColor: 'white',
+    padding: 20,
+    borderRadius: 12,
+    width: '80%',
+    maxHeight: '80%',
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 16,
+    color: '#333',
+  },
+  dateList: {
+    maxHeight: 400,
+  },
+  modalOption: {
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
+  },
+  selectedDate: {
+    backgroundColor: '#007AFF15',
+  },
+  dateOptionText: {
+    fontSize: 16,
+    color: '#333',
+  },
+  selectedDateText: {
+    color: '#007AFF',
+    fontWeight: '600',
+  },
+  modalButton: {
+    marginTop: 16,
+    backgroundColor: '#007AFF',
+    padding: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  modalButtonText: {
+    color: 'white',
+    fontWeight: '600',
+  },
+  datePicker: {
+    width: '100%',
+    backgroundColor: 'white',
+  },
+  loadingContainer: {
+    padding: 20,
+    alignItems: 'center',
+  },
+  errorContainer: {
+    padding: 20,
+    alignItems: 'center',
+  },
+  errorText: {
+    color: '#ff3b30',
+    marginBottom: 10,
+  },
+  retryButton: {
+    backgroundColor: '#007AFF',
+    padding: 10,
+    borderRadius: 5,
+  },
+  retryButtonText: {
+    color: '#fff',
+  },
+  noResultsContainer: {
+    padding: 20,
+    alignItems: 'center',
+  },
+  noResultsText: {
+    color: '#666',
+    fontSize: 16,
+  },
 });
 
-export default VenueListScreen; 
+export default VenueListScreen;

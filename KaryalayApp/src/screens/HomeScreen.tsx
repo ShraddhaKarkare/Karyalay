@@ -104,11 +104,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
 
         <View style={styles.statsContainer}>
           <View style={styles.statCard}>
-            <Text style={styles.statNumber}>4</Text>
-            <Text style={styles.statLabel}>Available Venues</Text>
-          </View>
-          <View style={styles.statCard}>
-            <Text style={styles.statNumber}>3</Text>
+            <Text style={styles.statNumber}>You have no bookings yet</Text>
             <Text style={styles.statLabel}>Your Bookings</Text>
           </View>
         </View>
@@ -149,6 +145,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
           <CustomButton
             title="Browse Venues"
             onPress={() => navigation.navigate('VenueList')}
+            variant='secondary'
             style={styles.actionButton}
           />
           

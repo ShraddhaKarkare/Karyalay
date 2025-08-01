@@ -81,14 +81,17 @@ const SignupScreen: React.FC<SignupScreenProps> = ({ navigation }) => {
 
     setLoading(true);
     try {
-      await SupabaseService.signUp({
+      // Sign up with Supabase
+      const supabaseData = await SupabaseService.signUp({
         email: formData.email,
         password,
         first_name: formData.firstName,
         last_name: formData.lastName,
         phone_number: formData.phoneNumber,
       });
-      // Optionally, you can fetch the profile here
+
+      await AuthService.signup(formData);
+      
       Alert.alert(
         'Success!',
         'Your account has been created successfully. Please check your email for verification.',
@@ -246,4 +249,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default SignupScreen; 
+export default SignupScreen;
