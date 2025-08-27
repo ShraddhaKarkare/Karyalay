@@ -20,3 +20,11 @@ export interface AuthState {
   isAuthenticated: boolean;
   isLoading: boolean;
 } 
+
+export interface VenueAvailability {
+  startDate: Date;
+  endDate: Date;
+  startTime: string;
+  endTime: string;
+  status: 'available' | 'booked'| 'partially booked';
+}

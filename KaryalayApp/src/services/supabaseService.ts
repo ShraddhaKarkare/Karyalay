@@ -1,4 +1,6 @@
 import { supabase, Profile, Venue, Booking } from '../config/supabase';
+import { VenueAvailability } from '../types';
+import { AuthService } from './authService';
 
 export class SupabaseService {
   // User Profile Methods
@@ -83,7 +85,6 @@ export class SupabaseService {
   static async getVenues(filters: { 
     city?: string; 
     name?: string; 
-    date?: Date;
   }): Promise<Venue[]> {
     try {
       let query = supabase
@@ -205,31 +206,37 @@ export class SupabaseService {
       return [];
     }
   }
-
-  static async updateBookingStatus(bookingId: string, status: Booking['status']): Promise<Booking | null> {
+  static async getVenueBookings(
+        venueId: string, 
+        start_date: string, 
+        end_date: string
+  ): Promise<VenueAvailability[]> {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
       
-      if (!user) {
-        throw new Error('User not authenticated');
-      }
-
       const { data, error } = await supabase
         .from('bookings')
-        .update({ status })
-        .eq('id', bookingId)
-        .eq('user_id', user.id)
-        .select()
-        .single();
+        .select('start_date, end_date, start_time, end_time, status')
+        .eq('venue_id', venueId)
+        .gte('start_date', start_date)
+        .lte('end_date', end_date)
+        .order('start_date', { ascending: true });
 
       if (error) throw error;
-      return data;
+
+      console.log('Venue bookings:', data);
+
+      return data?.map(booking => ({
+        startDate: booking.start_date,
+        endDate: booking.end_date,
+        startTime: booking.start_time,
+        endTime: booking.end_time,
+        status: booking.status
+      })) as VenueAvailability[] || [];
     } catch (error) {
-      console.error('Error updating booking status:', error);
-      return null;
+      console.error('Error getting venue bookings:', error);
+      return [];
     }
   }
-
   // Authentication Methods
   static async signUp(userData: {
     email: string;
@@ -237,7 +244,7 @@ export class SupabaseService {
     first_name: string;
     last_name: string;
     phone_number: string;
-}) {
+  }) {
     try {
         const { data, error } = await supabase.auth.signUp({
             email: userData.email,
@@ -257,7 +264,7 @@ export class SupabaseService {
         console.error('Error signing up:', error);
         throw error;
     }
-}
+  }
 
   static async signIn(email: string, password: string) {
     try {
@@ -313,9 +320,15 @@ export class SupabaseService {
 
   static async verifyOtp(email: string, otp: string) {
     // TODO: Implement OTP verification logic with Supabase 
-    const { error } = await supabase.auth.verifyOtp({ email, token: otp, type: 'email' });
+    const {
+      data: { session },
+      error,
+    } = await supabase.auth.verifyOtp({ email, token: otp, type: 'email' });
     if (error) throw error;
-  
-    return true;
+
+    if(session?.user) {
+      await AuthService.setUser(session.user);
+    }
+    return session;
   }
 }

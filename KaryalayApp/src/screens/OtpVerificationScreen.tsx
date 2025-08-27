@@ -12,6 +12,9 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import CustomInput from '../components/CustomInput';
 import CustomButton from '../components/CustomButton';
 import { SupabaseService } from '../services/supabaseService';
+import { AuthService } from '../services/authService';
+import { User } from '../types';
+
 
 interface OtpVerificationScreenProps {
   route: { params: { email: string } };
@@ -34,7 +37,8 @@ const OtpVerificationScreen: React.FC<OtpVerificationScreenProps> = ({
 
     setLoading(true);
     try {
-      await SupabaseService.verifyOtp(email, otp);
+      const session = await SupabaseService.verifyOtp(email, otp);
+      await AuthService.setUser(session?.user);
       navigation.replace('Home');
     } catch (error: any) {
       Alert.alert('Error', error.message || 'Invalid verification code');
@@ -64,7 +68,6 @@ const OtpVerificationScreen: React.FC<OtpVerificationScreenProps> = ({
               value={otp}
               onChangeText={setOtp}
               keyboardType="number-pad"
-              maxLength={6}
             />
 
             <CustomButton
@@ -73,6 +76,7 @@ const OtpVerificationScreen: React.FC<OtpVerificationScreenProps> = ({
               loading={loading}
               disabled={loading}
               style={styles.verifyButton}
+              variant='secondary'
             />
 
             <CustomButton

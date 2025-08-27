@@ -10,17 +10,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import CustomButton from '../components/CustomButton';
-
-interface Venue {
-  id: string;
-  name: string;
-  location: string;
-  capacity: number;
-  price: string;
-  rating: number;
-  image: string;
-  description: string;
-}
+import { Venue } from '../config/supabase';
 
 interface VenueDetailScreenProps {
   navigation: any;
@@ -34,38 +24,10 @@ interface VenueDetailScreenProps {
 const VenueDetailScreen: React.FC<VenueDetailScreenProps> = ({ navigation, route }) => {
   const { venue } = route.params;
 
-  const handleBookNow = () => {
-    Alert.alert(
-      'Book Venue',
-      `Would you like to book ${venue.name}?`,
-      [
-        {
-          text: 'Cancel',
-          style: 'cancel',
-        },
-        {
-          text: 'Book Now',
-          onPress: () => {
-            Alert.alert(
-              'Booking Successful!',
-              `Your booking for ${venue.name} has been confirmed. You will receive a confirmation shortly.`,
-              [
-                {
-                  text: 'OK',
-                  onPress: () => navigation.navigate('MyBookings'),
-                },
-              ]
-            );
-          },
-        },
-      ]
-    );
-  };
-
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView showsVerticalScrollIndicator={false}>
-        <Image source={{ uri: venue.image }} style={styles.venueImage} />
+        <Image source={{ uri: venue.image_url }} style={styles.venueImage} />
         
         <View style={styles.header}>
           <TouchableOpacity
@@ -78,23 +40,14 @@ const VenueDetailScreen: React.FC<VenueDetailScreenProps> = ({ navigation, route
 
         <View style={styles.content}>
           <Text style={styles.venueName}>{venue.name}</Text>
-          <Text style={styles.venueLocation}>{venue.location}</Text>
+          <Text style={styles.venueLocation}>{venue.address}</Text>
           
-          <View style={styles.ratingContainer}>
-            <Text style={styles.ratingText}>⭐ {venue.rating}</Text>
-          </View>
-
           <Text style={styles.description}>{venue.description}</Text>
 
           <View style={styles.detailsContainer}>
             <View style={styles.detailCard}>
               <Text style={styles.detailLabel}>Capacity</Text>
               <Text style={styles.detailValue}>{venue.capacity} people</Text>
-            </View>
-
-            <View style={styles.detailCard}>
-              <Text style={styles.detailLabel}>Price</Text>
-              <Text style={styles.detailValue}>{venue.price}</Text>
             </View>
           </View>
 
@@ -108,13 +61,8 @@ const VenueDetailScreen: React.FC<VenueDetailScreenProps> = ({ navigation, route
               <Text style={styles.amenityItem}>• Wi-Fi Access</Text>
             </View>
           </View>
-
-          <View style={styles.bookingContainer}>
-            <CustomButton
-              title="Book This Venue"
-              onPress={handleBookNow}
-              style={styles.bookButton}
-            />
+          <View style={styles.viewAvailabilityContainer}>
+            <CustomButton title='View Availability' onPress={() => navigation.navigate('Availability', { venueId: venue.id })} />
           </View>
         </View>
       </ScrollView>
@@ -222,6 +170,10 @@ const styles = StyleSheet.create({
   bookButton: {
     marginBottom: 0,
   },
+  viewAvailabilityContainer: {
+    marginBottom: 32,
+    alignItems: 'center',
+  },
 });
 
-export default VenueDetailScreen; 
+export default VenueDetailScreen;

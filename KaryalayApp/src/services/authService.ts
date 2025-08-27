@@ -1,17 +1,19 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { User, SignupFormData } from '../types';
+import { User } from '../config/supabase';
 
 const USER_STORAGE_KEY = '@karyalay_user';
 
 export class AuthService {
-  static async signup(userData: SignupFormData): Promise<User> {
+  static async setUser(userData: User): Promise<User> {
     try {
-      // In a real app, this would make an API call to your backend
       const newUser: User = {
-        id: Date.now().toString(),
+        id: userData.id,
+        email: userData.email,
+        created_at: userData.created_at,
+        last_sign_in_at: userData.last_sign_in_at,
+        app_metadata: userData.app_metadata,
+        user_metadata: userData.user_metadata,
         ...userData,
-        createdAt: new Date(),
-        updatedAt: new Date(),
       };
 
       // Store user data locally

@@ -23,8 +23,6 @@ const VenueListScreen: React.FC<VenueListScreenProps> = ({ navigation }) => {
   const [error, setError] = useState<string | null>(null);
   const [searchCity, setSearchCity] = useState('');
   const [searchVenue, setSearchVenue] = useState('');
-  const [date, setDate] = useState(new Date());
-  const [showDatePicker, setShowDatePicker] = useState(false);
 
   // Replace the filter function with a search function
   const searchVenues = async () => {
@@ -33,7 +31,6 @@ const VenueListScreen: React.FC<VenueListScreenProps> = ({ navigation }) => {
       const venuesData = await SupabaseService.getVenues({
         city: searchCity.trim(),
         name: searchVenue.trim(),
-        date: date
       });
       // Ensure venuesData is of type Venue[]
       setVenues(venuesData as Venue[]);
@@ -53,7 +50,7 @@ const VenueListScreen: React.FC<VenueListScreenProps> = ({ navigation }) => {
     }, 500); // Debounce search to avoid too many API calls
 
     return () => clearTimeout(debounceTimer);
-  }, [searchCity, searchVenue, date]);
+  }, [searchCity, searchVenue]);
 
   const renderVenueCard = (venue: Venue) => (
     <TouchableOpacity
@@ -76,10 +73,6 @@ const VenueListScreen: React.FC<VenueListScreenProps> = ({ navigation }) => {
           <View style={styles.detailItem}>
             <Text style={styles.detailLabel}>Price:</Text>
             <Text style={styles.detailValue}>₹{venue.price_per_hour}/hr</Text>
-          </View>
-          <View style={styles.detailItem}>
-            <Text style={styles.detailLabel}>Rating:</Text>
-            <Text style={styles.detailValue}>⭐ {venue.rating}</Text>
           </View>
         </View>
       </View>

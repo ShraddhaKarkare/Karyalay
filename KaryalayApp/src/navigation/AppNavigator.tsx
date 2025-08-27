@@ -10,6 +10,7 @@ import VenueDetailScreen from '../screens/VenueDetailScreen';
 import ButtonDemoScreen from '../screens/ButtonDemoScreen';
 import OtpSignInScreen from '../screens/OtpSignInScreen';
 import OtpVerificationScreen from '../screens/OtpVerificationScreen';
+import VenueAvailabilityScreen from '../screens/VenueAvailabilityScreen';
 import { AuthService } from '../services/authService';
 import { User } from '../types';
 
@@ -67,6 +68,7 @@ const AppNavigator: React.FC = () => {
           <Stack.Screen name="MyBookings" component={MyBookingsScreen} />
           <Stack.Screen name="VenueDetail" component={VenueDetailScreen} />
           <Stack.Screen name="ButtonDemo" component={ButtonDemoScreen} />
+          <Stack.Screen name="Availability" component={VenueAvailabilityScreen} />
         </Stack.Navigator>
       </NavigationContainer>
     </SafeAreaProvider>
